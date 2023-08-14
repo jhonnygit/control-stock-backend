@@ -1,14 +1,50 @@
 const express=require('express')
+const mongoose=require('mongoose')
+const path=require('path');
+require('dotenv').config()
 
 const app=express()
 
-app.get('/', (req, res) => {
-    console.log('peticion recibida')
-    res.status(200).send('<h1>Hola mundo con nodemon</h1>')
-});
+const PORT=process.env.PORT
 
-const PORT=process.env.PORT || 4000
+mongoose
+    .connect(
+        `mongodb+srv://jhonlook007:${process.env.MONGO_DB_PASS}@development.ylu9mau.mongodb.net/?retryWrites=true&w=majority`
+    )
+    .then((result)=>{
+        app.listen(PORT,() => {
+            console.log(`Servidor escuchando en el puerto ${PORT}`)
+        })
+        console.log('Conexion exitosa a la BBDD')
+    })
+    .catch((err)=>console.log(err)) 
 
-app.listen(PORT,()=>{
-    console.log(`Servidor escuchando en el puerto ${PORT}`)
+const productSchema=mongoose.Schema(
+    {
+       name:{type:'String',require:true},
+       price:{ type : 'Number'}
+    },
+    {timestamps:true}
+)
+
+const Product=mongoose.model('Product',productSchema)
+
+    
+app.use(express.json())
+
+app.post('/api/v1/products',(req,res) => {
+    const newProduct=new Product(req.body)
+    newProduct
+    .save()
+    .then((result)=>{
+        res.status(201).json({ok:true})
+    })
+    .catch((err)=>console.log(err))
+    
 })
+
+app.use(express.static(path.join(__dirname,'public')))
+
+
+
+
